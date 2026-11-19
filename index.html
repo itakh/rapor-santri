@@ -10,7 +10,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<script src="config.js?v=201fb4d6"></script>
+<script src="config.js?v=820f7926"></script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:')addEventListener('load',function(){navigator.serviceWorker.register('sw.js')})</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap" rel="stylesheet">
@@ -754,7 +754,7 @@ function mulai(){
   $('#app').innerHTML=`<div class="shell"><aside class="side" id="side">
     <div class="brand"><img src="${LOGO}" alt=""><div><b>Rapor Santri</b><span>${esc(st.semester)} · ${esc(st.tahunAjaran)}</span></div></div>
     <nav class="nav" id="nav"></nav>
-    <div class="me"><div class="av">${inisial(me.nama)}</div><div style="min-width:0;flex:1"><b>Ust. ${esc(me.nama.split(',')[0])}</b><span>${me.isAdmin?'Admin':me.isMudir?'Mudir':'Pengajar'}</span></div><button class="btn btn-g btn-sm" style="color:#cfe0c4" title="Keluar" id="bk">${ic('out')}</button></div>
+    <div class="me"><div class="av">${inisial(me.nama)}</div><div style="min-width:0;flex:1"><b>Ust. ${esc(me.nama.split(',')[0])}</b><span>${me.isAdmin?'Admin':me.isMudir?'Mudir':me.isKesantrian?'Kepala Kesantrian':'Pengajar'}</span></div><button class="btn btn-g btn-sm" style="color:#cfe0c4" title="Keluar" id="bk">${ic('out')}</button></div>
    </aside><main class="main"><div class="top"><button class="btn btn-g btn-sm" id="bm">${ic('menu')}</button><img src="${LOGO}" alt=""><b>Rapor Santri</b></div><div class="wrap" id="page"></div></main></div>
    <div class="scrim" id="scrim"></div><nav class="bnav" id="bnav" aria-label="Menu utama"></nav>`;
   $('#bk').onclick=keluar;
@@ -830,7 +830,7 @@ async function tanganiKembali(){
 function boleh(m){const me=S.d.me,p=me.peran;
   if(m.admin)return me.isAdmin;
   const nilai=me.isAdmin||p.mapel.length>0, rekap=me.isAdmin||me.isMudir||p.wali.length>0;
-  const th=me.isAdmin||p.halaqah.length>0, as=me.isAdmin||p.asrama.length>0, wl=me.isAdmin||p.wali.length>0;
+  const th=me.isAdmin||me.isKesantrian||p.halaqah.length>0, as=me.isAdmin||me.isKesantrian||p.asrama.length>0, wl=me.isAdmin||p.wali.length>0;
   if(m.need==='nilai')return nilai; if(m.need==='rekap')return rekap; if(m.need==='tahfizh')return th; if(m.need==='nasrama')return as; if(m.need==='wali')return wl;
   if(m.need==='any')return nilai||rekap||th||as||wl;
   return true;}
@@ -898,6 +898,7 @@ PAGES.beranda=()=>{
      <span>Tahun ajaran</span><b>${esc(st.tahunAjaran)}</b><span>Semester</span><b>${esc(st.semester)}</b><span>Tanggal rapor</span><b>${tglTxt}</b><span>KKM</span><b>${esc(st.kkm)}</b></div></div></div>`}
   </div>
   ${me.isAdmin||me.isMudir?kartuProgres():''}
+  ${me.isAdmin||me.isMudir||me.isKesantrian?kartuKesantrian():''}
   <div class="card" style="margin-top:18px"><div class="card-h"><h3>Kelas</h3></div><div class="tw"><table class="t"><thead><tr><th>Kelas</th><th>Wali kelas</th><th>Santri</th><th>Mapel</th></tr></thead><tbody>
    ${kelasUrut().map(k=>`<tr><td><b>${esc(k.nama)}</b><span class="ar sub">${esc(k.namaAr)}</span></td><td>${esc(ust(k.waliId))}</td><td>${santriAktif().filter(s=>s.kelasId===k.id).length}</td><td>${d.pengampuan.filter(x=>x.kelasId===k.id).length}</td></tr>`).join('')}
   </tbody></table></div></div>`;
@@ -992,7 +993,7 @@ function imporSantri(){
 function peranUstadz(id){
   const d=S.d,x=[],u=U(id);
   if(u.isAdmin)x.push('<span class="pill au">Admin</span>');
-  if(u.isMudir)x.push('<span class="pill au">Mudir</span>');
+  if(u.isMudir)x.push('<span class="pill au">Mudir</span>');if(u.isKesantrian)x.push('<span class="pill au">Kepala Kesantrian</span>');
   d.kelas.filter(k=>k.waliId===id).forEach(k=>x.push(`<span class="pill">Wali ${k.tingkat}</span>`));
   const n=d.pengampuan.filter(p=>p.ustadzId===id).length;if(n)x.push(`<span class="pill or">${n} mapel</span>`);
   if(d.halaqah.some(h=>h.musyrifId===id))x.push('<span class="pill">Halaqah</span>');
@@ -1020,6 +1021,7 @@ function formUstadz(u){
    <div class="f"><label>Username</label><input class="in mono" name="username" value="${esc(u.username)}" autocapitalize="none">${baru?'<small>Sandi awal = username + 123 (wajib diganti saat masuk pertama).</small>':''}</div>
    <label class="chk"><input type="checkbox" class="sw" name="isAdmin" ${u.isAdmin?'checked':''}> Admin <small style="color:var(--ink3);font-weight:400">— bisa mengubah data induk & pengaturan</small></label>
    <label class="chk"><input type="checkbox" class="sw" name="isMudir" ${u.isMudir?'checked':''}> Mudir <small style="color:var(--ink3);font-weight:400">— bisa melihat seluruh rapor</small></label>
+   <label class="chk"><input type="checkbox" class="sw" name="isKesantrian" ${u.isKesantrian?'checked':''}> Kepala Kesantrian <small style="color:var(--ink3);font-weight:400">— memantau nilai tahfizh &amp; keasramaan semua musyrif</small></label>
    <label class="chk"><input type="checkbox" class="sw" name="aktif" ${u.aktif?'checked':''}> Akun aktif</label>`,
    foot:`${baru?'':`<button class="btn btn-d" data-del>${ic('trash')}</button><button class="btn btn-s" data-r>${ic('key')}Atur ulang sandi</button>`}<span class="sp"></span><button class="btn btn-s" data-c>Batal</button><button class="btn btn-p" data-s>Simpan</button>`});
   $('[data-c]',m.ov).onclick=m.close;
@@ -1163,6 +1165,11 @@ function hitungNA(r){
 function urutPengampuan(arr){return [...arr].filter(Boolean).sort((a,b)=>(K(a.kelasId).tingkat-K(b.kelasId).tingkat)||((+M(a.mapelId).urutan||0)-(+M(b.mapelId).urutan||0)))}
 function barisProgres(p){const g=(S.d.progres||{})[p.id]||{n:0,isi:0,lengkap:0};const pc=g.n?Math.round(g.lengkap/g.n*100):0;
   return `<div class="prow" data-isi="${p.id}"><div class="nm">${esc(M(p.mapelId).nama)} <span>· ${esc(K(p.kelasId).nama)}</span></div><div class="bar"><i style="width:${pc}%"></i></div><div class="ct">${g.lengkap}/${g.n}</div><button class="btn btn-s btn-sm">Isi</button></div>`}
+function kartuKesantrian(){
+  const hq=[...S.d.halaqah].sort((a,b)=>a.nama.localeCompare(b.nama)),as=[...S.d.asrama];
+  return `<div class="card" style="margin-top:18px"><div class="card-h"><h3>Pantauan kesantrian</h3><span style="color:var(--ink3);font-size:12.5px">Lengkap = semua isian santri terisi</span></div>
+   <div class="sec-t" style="margin:12px 16px 4px">Halaqah tahfizh</div><div>${hq.map(h=>barisProgres2('tahfizh',h.id,esc(h.nama)+' <span>· '+esc(ust(h.musyrifId))+'</span>')).join('')}</div>
+   <div class="sec-t" style="margin:12px 16px 4px">Keasramaan</div><div style="padding-bottom:6px">${as.map(a=>barisProgres2('asrama',a.id,esc(a.nama)+' <span>· '+esc(ust(a.musyrifId))+'</span>')).join('')}</div></div>`}
 function kartuProgres(){
   const pr=S.d.progres||{};
   const rows=kelasUrut().map(k=>{const ps=S.d.pengampuan.filter(p=>p.kelasId===k.id);let n=0,l=0,mapelSelesai=0;
@@ -1394,7 +1401,7 @@ const sapaan=s=>'Ananda '+(s.panggilan||s.nama.split(' ')[0]);
 const gabung=a=>a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' dan '+a[a.length-1];
 const fmtJuz=c=>{const j=Math.floor(c+1e-9),h=Math.round((c-j)*20);return {dec:(Math.round(c*100)/100).toString().replace('.',','),teks:h?`${j} juz ${h} hlm`:`${j} juz`}};
 
-function parseJuz(t){return String(t||'')===''?[]:String(t).split(';').map(x=>{const p=x.split(':');return {juz:p[0]||'',hafalan:p[1]||'',tilawah:p[2]||'',halaman:p[3]||'20'}})}
+function parseJuz(t){return String(t||'')===''?[]:String(t).split(';').map(x=>{const p=x.split(':');return {juz:p[0]||'',hafalan:p[1]||'',tilawah:p[2]||'',halaman:p[3]||'20'}}).sort((a,b)=>(+a.juz||99)-(+b.juz||99))}
 function hitungTahfizh(list){
   const rows=list.map(j=>{const h=num(j.hafalan),t=num(j.tilawah);const ok=h!=null&&t!=null&&!isNaN(h)&&!isNaN(t);return Object.assign({},j,{akhir:ok?(h+t)/2:null})});
   const v=rows.filter(r=>r.akhir!=null).map(r=>r.akhir);
@@ -1490,7 +1497,7 @@ async function simpanF(rows,pesan){
 }
 
 PAGES.tahfizh=()=>{
-  const me=S.d.me;const arr=(me.isAdmin?[...S.d.halaqah]:S.d.halaqah.filter(h=>h.musyrifId===me.id)).sort((a,b)=>a.nama.localeCompare(b.nama));
+  const me=S.d.me;const arr=((me.isAdmin||me.isKesantrian)?[...S.d.halaqah]:S.d.halaqah.filter(h=>h.musyrifId===me.id)).sort((a,b)=>a.nama.localeCompare(b.nama));
   if(!arr.length){$('#page').innerHTML='<div class="ph"><div><h1>Tahfizh</h1></div></div><div class="card empty">Anda belum tercatat sebagai musyrif halaqah.</div>';return}
   if(!arr.some(h=>h.id===S.f.hq)){const own=arr.find(h=>h.musyrifId===me.id);S.f.hq=(own||arr[0]).id}
   $('#page').innerHTML=`<div class="ph"><div><h1>Tahfizh</h1><p>Nilai ujian per juz, capaian &amp; akhir hafalan, adab, absensi, dan catatan musyrif.</p></div>
@@ -1502,8 +1509,10 @@ async function muatTahfizh(){
   const gid=S.f.hq;let r;try{r=await call('ambilForm',{jenis:'Tahfizh',grupId:gid},{silent:true})}catch(e){$('#fc').innerHTML='<div class="empty">Gagal memuat.</div>';return}
   if(gid!==S.f.hq||S.page!=='tahfizh')return;
   const map={};r.rows.forEach(x=>map[x.santriId]=x);
-  F={page:'tahfizh',jenis:'Tahfizh',grupId:gid,data:map,dirty:false};renderTahfizh();
+  F={page:'tahfizh',jenis:'Tahfizh',grupId:gid,data:map,dirty:false};tandaPantau(H(gid).musyrifId);renderTahfizh();
 }
+function tandaPantau(pemilik){const ada=$('#pantau');if(ada)ada.remove();const me=S.d.me;if(me.isAdmin||pemilik===me.id)return;
+  $('#fc').insertAdjacentHTML('beforebegin','<div class="note" id="pantau" style="margin-bottom:12px">Mode pantau: Antum dapat melihat seluruh nilai, tetapi pengisian tetap oleh musyrif yang bersangkutan.</div>')}
 function renderTahfizh(){
   if(HP())return renderTahfizhHP();
   const h=H(F.grupId),bisa=S.d.me.isAdmin||h.musyrifId===S.d.me.id;
@@ -1531,7 +1540,7 @@ function editTahfizh(s,bisa){
     <div class="grid2"><div class="f"><label>Akhir hafalan (surat)</label><select class="in" name="su">${'<option value="">— pilih surat —</option>'+SURAH.map((q,i)=>`<option value="${i+1}" ${+ak[0]===i+1?'selected':''}>${i+1}. ${esc(q[0])} · ${q[1]}</option>`).join('')}</select></div>
      <div class="grid2" style="gap:0 10px"><div class="f"><label>Ayat</label><input class="in" name="ay" inputmode="numeric" value="${esc(ak[1]||'')}"></div>
      <div class="f"><label>Adab di halaqah</label><select class="in" name="adab">${['','A','B','C','D'].map(v=>`<option ${v===(x.adab||'')?'selected':''} value="${v}">${v?v+' · '+PRED_HURUF[v]:'—'}</option>`).join('')}</select></div></div></div>
-    ${HP()?'<div class="hsub">Absensi halaqah <span>(jumlah hari)</span></div>':''}<div class="grid3 g3m"><div class="f"><label>${HP()?'Izin':'Izin (hari)'}</label><input class="in" name="izin" inputmode="numeric" placeholder="0" value="${esc(x.izin||'')}"></div><div class="f"><label>${HP()?'Sakit':'Sakit (hari)'}</label><input class="in" name="sakit" inputmode="numeric" placeholder="0" value="${esc(x.sakit||'')}"></div><div class="f"><label>${HP()?'Tanpa ket.':'Tanpa keterangan'}</label><input class="in" name="alpa" inputmode="numeric" placeholder="0" value="${esc(x.alpa||'')}"></div></div>
+    ${HP()?'<div class="hsub">Absensi halaqah <span>(jumlah '+satuanAbsenT().id+')</span></div>':''}<div class="grid3 g3m"><div class="f"><label>${HP()?'Izin':'Izin ('+satuanAbsenT().id+')'}</label><input class="in" name="izin" inputmode="numeric" placeholder="0" value="${esc(x.izin||'')}"></div><div class="f"><label>${HP()?'Sakit':'Sakit ('+satuanAbsenT().id+')'}</label><input class="in" name="sakit" inputmode="numeric" placeholder="0" value="${esc(x.sakit||'')}"></div><div class="f"><label>${HP()?'Tanpa ket.':'Tanpa keterangan'}</label><input class="in" name="alpa" inputmode="numeric" placeholder="0" value="${esc(x.alpa||'')}"></div></div>
     <div class="f"><label>Catatan musyrif halaqah <span id="cmode" class="pill gy"></span></label><div id="cprev" class="cprev"></div>${bisa?'<div><button class="btn btn-g btn-sm" id="uc" style="margin-top:6px">Ubah catatan</button></div>':''}</div>`,
     foot:`<span class="sp"></span><button class="btn btn-s" data-c>${bisa?'Batal':'Tutup'}</button>${bisa?'<button class="btn btn-p" data-s>Simpan</button>':''}`});
   const ov=m.ov;
@@ -1561,14 +1570,18 @@ function editTahfizh(s,bisa){
     const auto=catatanHalaqah(s,t,$('[name=adab]',ov).value);
     $('#cmode',ov).textContent=kustom?'diubah manual':'otomatis';$('#cprev',ov).textContent=kustom||auto||'Catatan otomatis muncul setelah nilai juz diisi.';return auto};
   $('#jb',ov).addEventListener('input',e=>{const el=e.target;if(!el.dataset.k)return;juz[+el.dataset.i][el.dataset.k]=el.value;
-    if(el.classList.contains('gi'))el.classList.toggle('bad',el.dataset.k==='juz'?!(el.value===''||(+el.value>=1&&+el.value<=30)):Number.isNaN(num(el.value)));
+    if(el.classList.contains('gi')&&el.dataset.k!=='juz')el.classList.toggle('bad',Number.isNaN(num(el.value)));
+    if(el.dataset.k==='juz')cekJuz(true);
     const t=hitungTahfizh(juz);const na=el.closest('[data-row]').querySelector('.na');if(na){const v=t.rows[+el.dataset.i].akhir;na.textContent=v!=null?fmt1(v):'—'}ringkas()});
+  const cekJuz=beri=>{const ins=$$('#jb input[data-k="juz"]',ov);const hit={};ins.forEach(x=>{const v=x.value.trim();if(v)hit[+v]=(hit[+v]||0)+1});let dobel=0;
+    ins.forEach(x=>{const v=x.value.trim();const salah=v!==''&&!(+v>=1&&+v<=30&&Math.floor(+v)===+v);const d=v!==''&&hit[+v]>1;if(d)dobel=+v;x.classList.toggle('bad',salah||d);x.title=d?'Juz '+v+' sudah tercatat':salah?'Nomor juz 1–30':''});
+    if(beri&&dobel&&cekJuz.akhir!==dobel)toast('Juz '+dobel+' sudah tercatat. Satu juz hanya boleh satu baris.',true);cekJuz.akhir=dobel;return dobel};
   $('#jb',ov).addEventListener('change',e=>{if(e.target.tagName==='SELECT'){juz[+e.target.dataset.i].halaman=e.target.value;ringkas()}});
   $('[name=adab]',ov).onchange=ringkas;
   if(bisa){
     $('#tj',ov).onclick=()=>{juz.push({juz:String(usulJuz()),hafalan:'',tilawah:'',halaman:'20'});gambar();const ins=$$('#jb input[data-k="hafalan"]',ov);if(ins.length)ins[ins.length-1].focus()};
     $('#uc',ov).onclick=()=>ubahCatatan('Catatan musyrif halaqah',ringkas(),kustom,v=>{kustom=v;ringkas()});
-    $('[data-s]',ov).onclick=async()=>{if($('#jb .bad',ov))return toast('Periksa isian yang ditandai merah.',true);
+    $('[data-s]',ov).onclick=async()=>{const dj=cekJuz(false);if(dj)return toast('Juz '+dj+' tercatat dua kali. Hapus atau ganti salah satunya.',true);if($('#jb .bad',ov))return toast('Periksa isian yang ditandai merah.',true);
       const v=nilaiForm(ov);const row={santriId:s.id,juz,akhir:v.su?v.su+':'+v.ay:'',adab:v.adab,izin:v.izin,sakit:v.sakit,alpa:v.alpa,catatan:kustom};
       if(await simpanF([row])){m.close();renderTahfizh()}};
   }
@@ -1600,7 +1613,7 @@ function imporTahfizh(){
 }
 
 PAGES.nasrama=()=>{
-  const me=S.d.me;const arr=(me.isAdmin?[...S.d.asrama]:S.d.asrama.filter(a=>a.musyrifId===me.id));
+  const me=S.d.me;const arr=((me.isAdmin||me.isKesantrian)?[...S.d.asrama]:S.d.asrama.filter(a=>a.musyrifId===me.id));
   if(!arr.length){$('#page').innerHTML='<div class="ph"><div><h1>Keasramaan</h1></div></div><div class="card empty">Anda belum tercatat sebagai musyrif asrama.</div>';return}
   if(!arr.some(a=>a.id===S.f.as)){const own=arr.find(a=>a.musyrifId===me.id);S.f.as=(own||arr[0]).id}
   $('#page').innerHTML=`<div class="ph"><div><h1>Keasramaan</h1><p>Penilaian 9 aspek keasramaan (A–D). Predikat, deskripsi, dan catatan dibuat otomatis.</p></div>
@@ -1615,7 +1628,7 @@ async function muatAsrama(){
   const santri=santriAktif().filter(s=>s.asramaId===gid).sort((a,b)=>(K(a.kelasId).tingkat-K(b.kelasId).tingkat)||a.nama.localeCompare(b.nama));
   F={page:'nasrama',jenis:'NilaiAsrama',grupId:gid,data:map,dirty:false,santri,
     rows:santri.map(s=>{const x=map[s.id]||{};return {s,a:[1,2,3,4,5,6,7,8,9].map(i=>x['a'+i]||''),catatan:x.catatan||''}})};
-  renderAsrama();
+  tandaPantau(A(gid).musyrifId);renderAsrama();
 }
 function renderAsrama(){
   if(HP())return renderAsramaHP();
@@ -1688,6 +1701,7 @@ const BULAN_ID=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustu
 function tglHijri(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d)}catch(e){return ''}}
 const ASET=id=>{const el=document.getElementById(id);return el?(el.getAttribute('src')||''):''};
 const satuanAbsen=()=>S.d.pengaturan.satuanAbsenDiniyah==='hari'?{id:'hari',ar:'باليوم'}:{id:'sesi',ar:'بالحصة'};
+const satuanAbsenT=()=>S.d.pengaturan.satuanAbsenTahfizh==='hari'?{id:'hari',ar:'باليوم'}:{id:'sesi',ar:'بالجلسة'};
 
 const RP={};
 RP.kop=(arT,idT)=>{const st=S.d.pengaturan;return `<div class="kop"><img src="${ASET('logoBig')}" alt=""><div class="c"><div class="t-ar ar">${arT}</div><div class="t-ar2 ar">${esc(st.namaLembagaAr)}</div>
@@ -1757,7 +1771,7 @@ function rapTahfizh(s,t,ctx){
     ${RP.tile('Capaian','مقدار الحفظ',th.rows.length?`${c.dec} Juz <span style="font-size:8.5pt;font-weight:600;color:#555">(${c.teks})</span>`:'–')}${RP.tile('Predikat','التقدير',`${pr[0]}<span class="ar">${pr[1]}</span>`,'p')}</div>
    <div class="tiles" style="grid-auto-flow:row"><div class="tile"><div class="l"><span>Akhir Hafalan (Surat : Ayat)</span><span class="ar">آخر الحفظ</span></div>
     <div class="v" style="display:flex;justify-content:space-between"><span>${su?esc(su[0])+(ak[1]?' : '+esc(ak[1]):''):'–'}</span><span class="ar">${su?su[1]+(ak[1]?' : '+AR_DIG(ak[1]):''):''}</span></div></div></div>
-   <div class="two">${RP.adab(x.adab,'B. Adab di Halaqah','آداب الطالب في الحلقة','')}${RP.absen(x,'C. Absensi Halaqah (hari)','الغياب (باليوم)','hari')}</div>
+   <div class="two">${RP.adab(x.adab,'B. Adab di Halaqah','آداب الطالب في الحلقة','')}${RP.absen(x,'C. Absensi Halaqah ('+satuanAbsenT().id+')','الغياب ('+satuanAbsenT().ar+')',satuanAbsenT().id)}</div>
    ${RP.catatan('Catatan Musyrif Halaqah','ملاحظات مشرف الحلقة',x.catatan||catatanHalaqah(s,th,x.adab))}
    ${RP.ttd('Musyrif Halaqah','مشرف الحلقة',U(hq.musyrifId))}${RP.foot('Rapor Tahfizh',s)}`);
 }
@@ -2011,7 +2025,7 @@ PAGES.pengaturan=()=>{
    <div class="card"><div class="card-h"><h3>Semester aktif</h3></div><div class="card-b">
     <div class="grid2">${inp('tahunAjaran','Tahun ajaran')}<div class="f"><label>Semester</label><select class="in" name="semester"><option ${st.semester==='Ganjil'?'selected':''}>Ganjil</option><option ${st.semester==='Genap'?'selected':''}>Genap</option></select></div></div>
     <div class="grid2">${inp('tanggalRapor','Tanggal penyusunan rapor','date')}<div class="f"><label>Mudir</label><select class="in" name="mudirId">${ustOpsi(st.mudirId)}</select></div></div>
-    <div class="f"><label>Satuan absensi diniyah</label><select class="in" name="satuanAbsenDiniyah"><option value="sesi" ${st.satuanAbsenDiniyah!=='hari'?'selected':''}>Per sesi / pertemuan</option><option value="hari" ${st.satuanAbsenDiniyah==='hari'?'selected':''}>Per hari</option></select><small>Tercetak di rapor diniyah, mis. "Sakit: 3 sesi". Absensi halaqah tetap per hari.</small></div>
+    <div class="f"><label>Satuan absensi diniyah</label><select class="in" name="satuanAbsenDiniyah"><option value="sesi" ${st.satuanAbsenDiniyah!=='hari'?'selected':''}>Per sesi / pertemuan</option><option value="hari" ${st.satuanAbsenDiniyah==='hari'?'selected':''}>Per hari</option></select><small>Tercetak di rapor diniyah, mis. "Sakit: 3 sesi".</small></div><div class="f"><label>Satuan absensi halaqah tahfizh</label><select class="in" name="satuanAbsenTahfizh"><option value="sesi" ${st.satuanAbsenTahfizh!=='hari'?'selected':''}>Per sesi halaqah</option><option value="hari" ${st.satuanAbsenTahfizh==='hari'?'selected':''}>Per hari</option></select><small>Tercetak di rapor tahfizh, mis. "Izin: 2 sesi".</small></div>
     <div class="note g">Semester <b>Genap</b> akan menampilkan keputusan kenaikan kelas di rapor diniyah; semester <b>Ganjil</b> tidak.</div>
    </div></div>
    <div class="card"><div class="card-h"><h3>Aturan nilai</h3></div><div class="card-b">
