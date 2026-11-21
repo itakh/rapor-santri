@@ -1,6 +1,6 @@
 // Menyimpan tampilan di HP agar cepat terbuka. Data selalu diambil langsung dari server.
-const C='rapor-201fb4d6';
-const FILES=['./','index.html','config.js','manifest.webmanifest','icon-192.png','icon-512.png'];
+const C='rapor-c8df62fc';
+const FILES=['./','index.html','config.js','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable.png'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(FILES)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
